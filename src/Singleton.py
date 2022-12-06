@@ -1,3 +1,7 @@
+
+""" A file contains two functions, one is a decorator for functions which is to set a variable in their namespace
+    The second one is a metaclass implementation of a OOP design mode, in general is to let a class only have one
+    instance in a thread."""
 def static_vars(**kwargs):
     def decorate(func):
         for k in kwargs:

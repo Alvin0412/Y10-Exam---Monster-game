@@ -9,6 +9,8 @@ import Entities
 import Events
 import GameItems
 
+"""This file define all the rooms during generate the floor"""
+
 
 def println(contents: str, end='\n', speed=0.015):
     for i in contents:
@@ -154,9 +156,9 @@ class NormalRoom(Room, ItemSelector):
                 if choose is not None:
                     self.is_used = 1
                     # print(cls_type, choose)
-                    print("something!(真的运气好)")
+                    print("something!Check your inventory")
                     if player.inventory_list.find_available_pos() is not None:
-                        player.pick_up(self._select_items(random.choice(cls_type)[1], grade=choose))
+                        player.pick_up(random.choice(self._select_items(random.choice(cls_type)[1], grade=choose)))
                     else:
                         println("You backpack is full!")
                         println("And then the thing you found just vanished")

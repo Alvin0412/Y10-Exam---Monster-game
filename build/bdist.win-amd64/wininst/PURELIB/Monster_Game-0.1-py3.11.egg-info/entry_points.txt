@@ -1,0 +1,3 @@
+[console_scripts]
+monster_game = MonsterGame.main:main
+

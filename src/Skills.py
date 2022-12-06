@@ -3,6 +3,7 @@ import random
 import time
 import typing
 
+"""Contains skills for entities"""
 
 def calc_rate(drop_rate):
     assert drop_rate < 1, "drop rate must be less than 1"

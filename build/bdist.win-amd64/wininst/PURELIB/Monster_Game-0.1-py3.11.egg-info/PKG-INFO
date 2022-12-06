@@ -1,0 +1,17 @@
+Metadata-Version: 2.1
+Name: Monster-Game
+Version: 0.1
+Summary: A simple monster game.
+Home-page: https://github.com/Alvin0412/Y10-Exam-Monster-game
+Author: Alvin.li
+Author-email: Alvin.li@harrowhaikou.cn
+License: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Environment :: Win32 (MS Windows)
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+
+UNKNOWN
+

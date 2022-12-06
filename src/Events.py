@@ -12,8 +12,11 @@ import Gamespaces
 import Skills
 from config import RoomConfig
 
-
 # config = RoomConfig(floors=3, mode=config.Modes.BASIC)
+
+""" This file contains classes(Events) that provides what looks like during the game and most of the logic part of 
+    user's operation.
+    Also some data structure I defined to help my code."""
 
 
 class multidict(collections.defaultdict):
@@ -69,10 +72,10 @@ class GameEvent(BasicEvent):
         time.sleep(0.4)
         println("If you entered into a Stairs room you can go to the next floor,\n"
                 "until there's no more floor, you win!")
-        println("If you died, you lose!",end='\n\n')
+        println("If you died, you lose!", end='\n\n')
         time.sleep(0.4)
         println("Some monster is stronger than you, \n"
-                "You can equip some accessories or weapons from your [inventory].",end='\n\n')
+                "You can equip some accessories or weapons from your [inventory].", end='\n\n')
         time.sleep(0.4)
         input("Press [Enter] to continue.....")
 
@@ -100,7 +103,6 @@ class GameEvent(BasicEvent):
             case 1:
                 RoomConfig()
                 name = input("input your name \n>>> ")
-
             case 2:
                 println("This option is not available yet!")
                 return self.run()
@@ -147,24 +149,39 @@ class GamespaceEvent(BasicEvent):
         println("You Win!")
 
 
-class FloorEvent(BasicEvent):
-    def __init__(self, floor, player: Entities.Player.BasicPlayer):
-
-        super(FloorEvent, self).__init__()
-        self.floor: Gamespaces.GameSpace.Floor = floor
+class InventoryEvent(BasicEvent):
+    def __init__(self, player: Entities.Player.BasicPlayer, in_fight: bool = False):
+        super(InventoryEvent, self).__init__()
+        self.is_in_fight = in_fight
         self.player = player
+        self._available_operation = {
+            'e',  # equip
+            'q',  # quit
+            'u',  # use
+            'd',  # drop
+        }
+        self._available_operation_in_fight = {
+            'u',  # use
+            'q',  # quit
+            'd'  # drop
+        }
 
-        self.player_location = 1  # start room
-        self.is_end_of_floor = False
-        self.post_init()
-        self.run()
+    def _display(self):
+        print(f"{'-' * 10}Inventory{'-' * 10}")
+        buffer = [None, None]
+        for i, v in enumerate(self.player.inventory_list):
+            if v is None:
+                buffer[i % 2] = f"{i + 1}.[Blank]"
+            else:
+                buffer[i % 2] = f"{i + 1}.[{v.name}]"
+            if (i + 1) % 2 == 0:
+                print(buffer[0].ljust(30, ' '), buffer[1].ljust(30, ' '))
+        print(f"name: {self.player.name}")
+        print(f"money: {self.player.wallet.value()}")
+        print(f"health: {self.player.health}")
+        print(f"atk: {self.player.atk}{' ' * 5}defence: {self.player.defence}")
 
-    def check_status(self):
-        if self.player.check_status() == -1:
-            return GameOverEvent(-1)
-
-    @staticmethod
-    def _player_get_inventory_option():
+    def _get_inventory_option(self):
         tmp = None
         println(f"Enter your command: ")
         print(f"(q)uit{' ' * 5}(u)se item{' ' * 5}(d)rop item{' ' * 5}(e)quip")
@@ -172,7 +189,7 @@ class FloorEvent(BasicEvent):
             try:
                 print(">>> ", end='')
                 _ = input()
-                if _ not in ('q', 'u', 'd', 'e'):
+                if _ not in self._available_operation:
                     print("Invalid input")
                 else:
                     tmp = _
@@ -181,7 +198,7 @@ class FloorEvent(BasicEvent):
                 print("Invalid input")
         return tmp
 
-    def _player_get_inventory_index(self):
+    def _get_inventory_index(self):
         tmp = None
         println("Enter the item index you want to use \n(or (q)uit):")
         while tmp is None:
@@ -202,17 +219,20 @@ class FloorEvent(BasicEvent):
 
         return tmp
 
-    def _player_handel_inventory_option(self, option):
+    def _handel_inventory_option(self, option):
+        if self.is_in_fight and option in self._available_operation_in_fight:
+            println("You can't do this during fight!")
+            return self.run()
         match option:
             case 'q':
                 return
             case 'u':
-                index = self._player_get_inventory_index()
+                index = self._get_inventory_index()
                 if index is None:
-                    return self._player_handel_inventory_option(self._player_get_inventory_option())
+                    return self._handel_inventory_option(self._get_inventory_option())
                 if self.player.inventory_list[index] is None:
                     println("* You can do nothing with an [Blank] inventory")
-                    return self._player_handel_inventory_option(option)
+                    return self._handel_inventory_option(option)
                 else:
                     self.player.recover(self.player.inventory_list[index])
                     if hasattr(self.player.inventory_list[index], "verb"):
@@ -224,22 +244,22 @@ class FloorEvent(BasicEvent):
                         println(self.player.inventory_list[index].info)
                     println(f"You recovered {self.player.inventory_list[index].heal} hp!")
                     self.player.inventory_list[index] = None
-                    return self.player_inventory()
+                    return self.run()
             case 'd':
-                index = self._player_get_inventory_index()
+                index = self._get_inventory_index()
                 if index is None:
-                    return self._player_handel_inventory_option(self._player_get_inventory_option())
+                    return self._handel_inventory_option(self._get_inventory_option())
                 if self.player.inventory_list[index] is None:
                     println("* You can do nothing with an [Blank] inventory")
-                    return self._player_handel_inventory_option(option)
+                    return self._handel_inventory_option(option)
                 else:
                     println(f"* You dropped a {self.player.inventory_list[index]} in position {index + 1}!")
                     self.player.drop(index)
-                    return self.player_inventory()
+                    return self.run()
             case 'e':
-                index = self._player_get_inventory_index()
+                index = self._get_inventory_index()
                 if index is None:
-                    return self._player_handel_inventory_option(self._player_get_inventory_option())
+                    return self._handel_inventory_option(self._get_inventory_option())
                 if isinstance(self.player.inventory_list[index], GameItems.Weapons.BasicWeapon):
                     if not self.player.weapon_slot[self.player.inventory_list[index].slot]:
                         self.player.equip_weapon(self.player.inventory_list[index])
@@ -250,7 +270,7 @@ class FloorEvent(BasicEvent):
                         else:
                             println("Your inventory is full!")
                             time.sleep(0.2)
-                            return self.player_inventory()
+                            return self.run()
                     time.sleep(0.2)
                 elif isinstance(self.player.inventory_list[index], GameItems.Accessory.BasicAccessory):
                     if not self.player.accessory_slot[self.player.inventory_list[index].slot]:
@@ -261,36 +281,44 @@ class FloorEvent(BasicEvent):
                             self.player.equip_accessory(self.player.inventory_list[index])
                         else:
                             println("Your inventory is full!")
-                            return self.player_inventory()
+                            return self.run()
                 else:
                     println("You can't equip this!")
                     return self.player_inventory()
                 println(f"You equipped a {self.player.inventory_list[index].__class__.__name__}")
                 self.player.inventory_list[index] = None
-                return self.player_inventory()
+                return self.run()
 
-        return self.player_inventory()
+        return self.run()
 
-    def player_display_inventory(self):
-        print(f"{'-' * 10}Inventory{'-' * 10}")
-        buffer = [None, None]
-        for i, v in enumerate(self.player.inventory_list):
-            if v is None:
-                buffer[i % 2] = f"{i + 1}.[Blank]"
-            else:
-                buffer[i % 2] = f"{i + 1}.[{v.name}]"
-            if (i + 1) % 2 == 0:
-                print(buffer[0].ljust(30, ' '), buffer[1].ljust(30, ' '))
-        print(f"name: {self.player.name}")
-        print(f"money: {self.player.wallet.value()}")
-        print(f"atk: {self.player.atk}     defence: {self.player.defence}")
+    def run(self):
+        if self.player.check_status() == -1:
+            return
+        else:
+            self._display()
+            opt = self._get_inventory_option()
+            self._handel_inventory_option(opt)
+
+
+class FloorEvent(BasicEvent):
+    def __init__(self, floor, player: Entities.Player.BasicPlayer):
+
+        super(FloorEvent, self).__init__()
+        self.floor: Gamespaces.GameSpace.Floor = floor
+        self.player = player
+
+        self.player_location = 1  # start room
+        self.is_end_of_floor = False
+        self.post_init()
+        self.run()
+
+    def check_status(self):
+        if self.player.check_status() == -1:
+            return GameOverEvent(-1)
 
     def player_inventory(self):
-        # print(1111114514)
+        self.player.inventory_list()
         self.check_status()
-        self.player_display_inventory()
-        comm = self._player_get_inventory_option()
-        self._player_handel_inventory_option(comm)
 
     def post_init(self):
         print(f"\n{'=' * 20}Floor {self.floor.floor_number}{'=' * 20}", end='\n\n')
@@ -338,6 +366,8 @@ class FloorEvent(BasicEvent):
 
     def run(self):
         while not self.is_end_of_floor:
+            if self.player.check_status() == -1:
+                GameOverEvent(-1)
             event_key = RoomEvent(self.player, self.floor[self.player_location]).run()
             match event_key:
                 case 'i':
@@ -734,6 +764,7 @@ class FightEvent(BasicEvent):
                 break
             self.npc_operation()
             self.round_cnt += 1
+
             self.enemy.update_round()
             self.check_status()
             self.end_of_round()

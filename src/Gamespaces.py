@@ -10,6 +10,8 @@ import Rooms
 import config
 from config import RoomConfig
 
+"""The file which defines GameSpace and Floor classes, and their generate methods"""
+
 random.seed(int(time.time()))
 EASY = EZ = 0
 BASIC = 1

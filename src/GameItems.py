@@ -1,3 +1,4 @@
+"""contains items which need to use in game"""
 class BasicItemType:
     ...
 

@@ -3,14 +3,18 @@ import random
 
 import numpy as np
 
+import Events
 import GameItems
 import Skills
 
+"""contains entity need to generate during game and player's character"""
+
 
 class Inventory:
-    def __init__(self, length):
+    def __init__(self, length, player=None):
         self.max_length = length
         self.slot_array = np.array([None for _ in range(self.max_length)])
+        self.player = player
 
     def find_available_pos(self) -> None | int:
         for p, v in enumerate(self.slot_array):
@@ -27,6 +31,12 @@ class Inventory:
     def __str__(self):
         return f"{self.slot_array}"
 
+    def __call__(self):
+        print(self.player)
+        if self.player is not None:
+            return Events.InventoryEvent(self.player).run()
+        else:
+            super.__call__()
 
 class Wallet:
     def __init__(self):
@@ -76,9 +86,9 @@ class Entity:
 
     def calc_acc_defence(self):
         cnt = 0
-        for _ in self.accessory_slot:
-            if isinstance(_, GameItems.Accessory.BasicAccessory):
-                cnt += _.defence
+        for accessory in self.accessory_slot:
+            if isinstance(accessory, GameItems.Accessory.BasicAccessory):
+                cnt += accessory.defence
         return cnt
 
     def calc_weapon_atk(self):
@@ -276,6 +286,7 @@ class Player(EntityGroup):
             self.in_defence = False
 
             self.wallet = Wallet()
+            self.inventory_list = Inventory(self.inventory_length,player=self)
             self.weapon_slot[0] = GameItems.Weapons.Stick()
             self.inventory_list[1] = GameItems.Heals.Water()
             self.inventory_list[2] = GameItems.Accessory.OldJeans()

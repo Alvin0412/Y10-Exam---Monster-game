@@ -3,6 +3,8 @@ from typing import Any
 
 from Singleton import Singleton
 
+"""Contains a class of user-defined options for gamespace generate"""
+
 
 @dataclass
 class Modes:
@@ -10,8 +12,8 @@ class Modes:
     EASY = EZ = 0
     BASIC = 1
     HARD = 2
-    HARDCORE = 3
-    GODMODE = 4
+    # HARDCORE = 3
+    # GODMODE = 4
     DEFAULT = BASIC
 
     def __call__(self, *args, **kwargs):
@@ -31,6 +33,10 @@ class RoomConfig(metaclass=Singleton):
         if self.floors is None:
             self.floors = int(input("Enter a total floors number below \n>>> "))
         if self.mode is None:
+            available_options = [(getattr(Modes, v), v) for i, v in enumerate(dir(Modes)) if v.isupper()]
+            available_options.sort(key=(lambda x: x[0]))
+            for i,j in available_options:
+                print(f"{i}. {j}")
             mode = input("Enter your mode below \n>>> ")
             if not mode.isnumeric():
                 if hasattr(Modes, f"{mode.upper()}"):
